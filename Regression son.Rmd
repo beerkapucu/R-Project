@@ -1,0 +1,139 @@
+---
+title: "Linear Regression-Logistic"
+output: html_document
+---
+```{r}
+#Linear Regression
+library(tidyverse)
+life_expect <- read_csv("Life Expectancy Data.csv")
+glimpse(life_expect)
+names(life_expect)[names(life_expect) == "Life expectancy"] <- "Life_expectancy"
+names(life_expect)[names(life_expect) == "Adult Mortality"] <- "Adult_mortality"
+names(life_expect)[names(life_expect) == "infant deaths"] <- "infant_deaths"
+names(life_expect)[names(life_expect) == "percentage expenditure"] <- "percentage_expenditure"
+names(life_expect)[names(life_expect) == "percentage expenditure"] <- "percentage_expenditure"
+names(life_expect)[names(life_expect) == "Hepatitis B"] <- "Hepatitis_B"
+names(life_expect)[names(life_expect) == "under-five deaths"] <- "under-five_deaths"
+names(life_expect)[names(life_expect) == "Total expenditure"] <- "Total_expenditure"
+names(life_expect)[names(life_expect) == "thinness  1-19 years"] <- "thinness_1-19_years"
+names(life_expect)[names(life_expect) == "thinness 5-9 years"] <- "thinness_5-9_years"
+names(life_expect)[names(life_expect) == "Income composition of resources"] <- "Income_composition_of_resources"
+glimpse(life_expect)
+
+life_expect$Status <- factor(life_expect$Status)
+life_expect$Country<- factor(life_expect$Country)
+glimpse(life_expect)
+
+mdl <- lm(Life_expectancy ~ ., data =life_expect)
+summary(mdl)
+
+life_expect <- life_expect %>% 
+    mutate(Country= gsub("Liberia|Mozambique|Togo|Zambia|Zimbabwe","Other",Country))
+
+
+
+mdl <- lm(Life_expectancy ~ Alcohol +  Adult_mortality + infant_deaths  + Schooling + Year + `HIV/AIDS` + Country +`under-five_deaths`  , data = life_expect)
+summary(mdl)
+
+
+
+#Logistic Regression
+life_expect <- read_csv(file.choose())
+glimpse(life_expect)
+life_expect$Status <- factor(life_expect$Status)
+life_expect$Country<- factor(life_expect$Country)
+glimpse(life_expect)
+names(life_expect)[names(life_expect) == "Life expectancy"] <- "Life_expectancy"
+names(life_expect)[names(life_expect) == "Adult Mortality"] <- "Adult_mortality"
+names(life_expect)[names(life_expect) == "infant deaths"] <- "infant_deaths"
+names(life_expect)[names(life_expect) == "percentage expenditure"] <- "percentage_expenditure"
+names(life_expect)[names(life_expect) == "percentage expenditure"] <- "percentage_expenditure"
+names(life_expect)[names(life_expect) == "Hepatitis B"] <- "Hepatitis_B"
+names(life_expect)[names(life_expect) == "under-five deaths"] <- "under-five_deaths"
+names(life_expect)[names(life_expect) == "Total expenditure"] <- "Total_expenditure"
+names(life_expect)[names(life_expect) == "thinness  1-19 years"] <- "thinness_1-19_years"
+names(life_expect)[names(life_expect) == "thinness 5-9 years"] <- "thinness_5-9_years"
+names(life_expect)[names(life_expect) == "Income composition of resources"] <- "Income_composition_of_resources"
+
+mdl2 <- glm(Status ~ . - Country, data =life_expect,
+           family = "binomial")
+summary(mdl2)
+
+mdl2 <- glm(Status ~Adult_mortality  + Alcohol + Hepatitis_B + Income_composition_of_resources + `thinness_5-9_years` + `thinness_1-19_years` + Year  , data =life_expect,
+           family = "binomial")
+summary(mdl2)
+
+ypred <- predict(mdl2,life_expect, type ="response") 
+ypred
+
+ypred2 <- ifelse(ypred < 0.5, "Developed" , "Developing")
+
+data_final_result <- data.frame(ypred, ypred2)
+
+#K-means Clustering
+life_expect <- read.csv(file.choose())
+library(dplyr)
+library(magrittr)
+library(ggplot2)
+library(factoextra)
+glimpse(life_expect)
+
+drop <- c("Country","Status")
+df <- life_expect[,!(names(life_expect) %in% drop)]
+
+df[is.na(df)] <- 0
+
+#Determining number of clusters
+set.seed(123)
+fviz_nbclust(df,kmeans,method="wss")
+fviz_nbclust(df,kmeans,method="silhouette")
+
+r <- c()
+
+for (k in 1:20){
+    mdlvisual <- kmeans(df,centers = k, nstart = 20)
+    r[k] <- df$betweenss/df$totss
+}
+
+plot(1:20,r,type = "l")
+
+#Factor Analysis
+life_expect <- read_csv("Life Expectancy Data.csv")
+glimpse(life_expect)
+
+life_expect$Status <- factor(life_expect$Status)
+life_expect$Country<- factor(life_expect$Country)
+
+drop <- c("Country","Status")
+df <- life_expect[,!(names(life_expect) %in% drop)]
+
+df[is.na(df)] <- 0
+
+
+df<- factanal(df, factors=4, scores= "regression")
+df
+print(df, cutoff=0.2)
+
+#Some Factor Loading Plots
+
+
+plot(df$loadings[,1], df$loadings[,2])
+text(df$loadings[,1], df$loadings[,2], row.names(df$loadings))
+
+plot(df$loadings[,2], df$loadings[,3])
+text(df$loadings[,2], df$loadings[,3], row.names(df$loadings))
+
+
+plot(df$loadings[,3], df$loadings[,4])
+text(df$loadings[,3], df$loadings[,4], row.names(df$loadings))
+
+
+
+
+
+
+
+
+
+```
+
