@@ -1,0 +1,498 @@
+---
+title: "Bolum 4"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r}
+library(tidyverse)
+df <- read_csv("AB_NYC_2019.csv")
+#Surekli degiskenlerin ozetleri(kullanisli fonksiyonlar)
+library(funModeling)
+profiling_num(df)
+plot_num(df)
+
+#Kategorik Degiskenler icin
+freq(df)
+
+#Detayli ozetler icin
+library(psych)
+#surekli degiskenler icin
+describe(df$price)
+library(Hmisc)
+Hmisc::describe(df$price)
+library(pastecs)
+stat.desc(df)
+
+#bir kategorik degiskenlerin icerisindeki siniflara erismek istedigimizde
+
+df2 <- select(df,minimum_nights,number_of_reviews,availability_365)
+#describe.by(df2 , df2$minimum_nights)
+
+
+
+
+```
+
+
+```{r}
+#DATAFRAME'LERIN INTERAKTIF KESFI(COK ONEMLI!!!)
+#1
+library(d3Tree)
+
+d3tree(list(root = df2tree(rootname='Titanic',
+                           struct = as.data.frame(Titanic)),
+                            layout = 'collapse'))
+#2
+devtools::install_github("rsquaredacademy/xplorerr")
+library(xplorerr)
+```
+
+
+```{r}
+#48.Barplot(Sutun grafik)- Kategorik degiskenlerin gorsellestirilmesi icin kullanilir.
+library(tidyverse)
+df <- diamonds
+glimpse(df)
+
+#Tek kategorik degisken icin
+ggplot(df, aes(cut)) +
+  geom_bar()
+
+#iki kategorik degisken birlikte yani cut icindeki her bir sinif icin color sayilari yani E,I,J 'ler nedir
+
+ggplot(df, aes(cut, fill=color)) +
+  geom_bar()
+#usttekinden farki daha guzel gozukup siniflarin anlasilmasi
+ggplot(df, aes(cut, fill=color)) +
+  geom_bar(position=position_dodge()) +
+  ggtitle("bu baslik ana baslik yazisidir") +
+  xlab("Pirlanta kaliteleri") +
+  ylab("Gozlenme sikliklari")
+```
+
+
+```{r}
+#49.Dagilim-Histogram-Yogunluk
+
+#Histogram(Surekli degiskeni gorsellesirmek istedigimizde)
+library(tidyverse)
+df <- diamonds
+glimpse(df)
+
+ggplot(df, aes(price)) +
+  geom_histogram(binwidth = 1000)
+
+#Yogunluk Grafigi
+ggplot(df, aes(price)) +
+  geom_density()
+
+#Yogunluk ve histogrami beraber gormek istersek(fakat olcekleri farkli)
+ggplot(df, aes(price)) +
+  geom_histogram(aes(y =  ..density..)) +
+  geom_density()
+
+#yukariya ek ayarlamalar
+ggplot(df, aes(price)) +
+  geom_histogram(aes(y =  ..density..)) +
+  geom_density(alpha = .3, fill = "orange")
+
+#Bir surekli bir kategorik degisken(surekli degisken kiriliminda histogramlari verecegiz)
+
+ggplot(df, aes(price, fill = cut)) +
+  geom_histogram() 
+
+#butun kategorik degisken siniflari ozelinde verisetini parcaliyoruz.
+ggplot(df, aes(price)) +
+  geom_histogram() +
+  facet_grid(cut ~.)
+  
+#50.Ridgeline(bir surekli degiskenin dagilimini icice kategorik degiskenler icerisinde ele alacagiz.)
+library(ggridges)
+df <- diamonds
+
+ggplot(df, aes(x = price , y = cut, fill = cut)) +
+  geom_density_ridges() +
+  theme_ridges() +
+  theme(legend.position = "none")
+
+#51.Interaktif Histogram
+library(plotly)
+
+g <- plot_ly(x = rnorm(500), type = "histogram")
+
+g
+
+#ust uste interaktif histogram
+
+g <- plot_ly(x = rnorm(500), opacity = 0.6, type = "histogram") %>%
+  add_trace(x = rnorm(500) + 1) %>%
+  layout(barmode = "overlay")
+
+g
+
+#52.Coklu Frekans(Bir surekli degisken icin frekans grafigi-Ozellikle surekli ve kategorik degiskenler beraber gosterildiginde daha anlamli olmus olur.)
+
+ggplot(df, aes(price, y = ..density..)) + #density olceklendirme icin#
+  geom_freqpoly(aes(colour = cut), binwidth = 500)
+
+ggplot(df, aes(price, y = ..density..)) +#density olceklendirme icin#
+  geom_density(aes(colour = cut), binwidth = 500)
+
+  
+```
+
+
+```{r}
+
+#53.Boxplot(Kutu grafik)(Surekli degiskenlerin gorsellestirilmesi)(Aykiri gozlemler icin iyidir.)(Histogram ve boxplot surekli degiskenlerde aklimiza gelmesi gereken en onemli 2 gorsellestirme teknigi)(Kategorikler icin sadece barplot aklimizda kalsa yeter)
+
+ggplot(df, aes(x = cut , y = price , fill = cut)) +
+  geom_boxplot()
+#kendi icinde en cok varyansi olan premium en carpik ideal !!!
+#boxplotun amaci surekli degiskenin dagilimiyla ilgili genel bilgi almak ve aykiri gozlemleri tespit edebilmek.
+
+#54.Violin(kategoriklerin hangi degerlerde ne siklikla olmasi gerektigini gostermesi nedeniyle boxplottan farklidir ve iyidir de)
+
+ggplot(df, aes(x = cut , y = price , fill = cut)) +
+  geom_violin(alpha = 0.6) #alpha saydamligi ifade ediyor girilmesi gerek#
+
+
+```
+
+
+```{r}
+#55.Korelasyon(Degiskenlerin birbirleri arasindaki iliskiler) (Scatter Plot)
+library(tidyverse)
+
+glimpse(iris)
+df <- iris
+
+
+#size:noktalarin boyutu, shape:noktalarin sekil turu, stroke:cizgilerin kalinligi, geom_smooth:korelasyonu gosteren egri#
+ggplot(df, aes(Sepal.Length, Sepal.Width)) + 
+  geom_point(size = 2,
+             shape = 21,
+             stroke = 1,
+             color = "black",
+             fill = "orange") +
+  geom_smooth(color = "red")
+
+#bir kategorik degisken(species) kiriliminda gorsellestirecegiz.
+ggplot(df, aes(Sepal.Length, Sepal.Width, color = Species , shape = Species)) + 
+  geom_point(size = 6, alpha = 0.6)
+
+#bir surekli degisken(petal.length) kiriliminda gorsellestirecegiz.
+ggplot(df, aes(Sepal.Length, Sepal.Width, color = Petal.Length , size = Petal.Length)) + 
+  geom_point(alpha = 0.6)
+
+
+#56.Korelasyon(Scatter Plot)(Birimleri grafige eklemek)(amacimiz sadece scatterplotu gormek degil verinin bize gostermedigini gosterebilmek anlamak)
+
+library(tidyverse)
+df<- mtcars
+
+#bu sadece iki degisken arasinda negatif korelasyon oldugunu ortaya koyar.
+ggplot(df, aes(x = wt, y = mpg)) +
+  geom_point()
+
+ggplot(df, aes(x = wt, y = mpg)) +
+  geom_point() +
+  geom_text(label = rownames(df),
+            nudge_x = 0.25,
+            nudge_y = 0.25,
+            check_overlap = T)
+
+
+#kutucuk icine alir
+ggplot(df, aes(x = wt, y = mpg)) +
+  geom_point() +
+  geom_label(label = rownames(df),
+            nudge_x = 0.25,
+            nudge_y = 0.25) 
+
+
+ggplot(df, aes(x = wt, y = mpg)) +
+  geom_point() +
+  geom_label(label = rownames(df),
+            nudge_x = 0.25,
+            nudge_y = 0.25) +
+  geom_smooth(method = lm , se= FALSE)
+
+#bir surekli degisken daha ekliyoruz(iyi arabalarin silindirlerinin yuksek oldugunu bu sekilde gorsellestirerek anlayabiliriz.)
+ggplot(df, aes(x = wt, y = mpg, fill = cyl)) +
+  geom_point() +
+  geom_label(label = rownames(df),
+            nudge_x = 0.25,
+            nudge_y = 0.25) +
+  geom_smooth(method = lm , se= FALSE)
+```
+
+
+```{r}
+#57.Marjinlere dagilim eklemek(Scatter plotunu aldigimiz iki degiskenin dagilimlarini da gormek istersek)
+
+
+#Dagilim da kategorik(barplot) veya surekli(histogram, yogunluk veya boxplot) degiskenler icin yapilabilir.
+
+
+#chunk outputu inlinedan console'a almamiz gerekiyor.
+#wt ve mpg.nin hem histogramlarini gorebilirken hem de ayni zamanda aralarindaki iliskiyi gorebiliyoruz!!!
+library(ggExtra)
+
+g <- ggplot(df, aes(x = wt, y = mpg, fill = cyl)) +
+  geom_point() +
+  geom_label(label = rownames(df),
+            nudge_x = 0.25,
+            nudge_y = 0.2) +
+  geom_smooth(method = lm , se= FALSE)
+
+ggMarginal(g, type = "histogram" , fill = "slateblue")
+
+
+
+library(ggExtra)
+
+g <- ggplot(df, aes(x = wt, y = mpg, fill = cyl)) +
+  geom_point() +
+  geom_label(label = rownames(df),
+            nudge_x = 0.25,
+            nudge_y = 0.2) +
+  geom_smooth(method = lm , se= FALSE)
+
+ggMarginal(g, type = "density")
+
+
+
+library(ggExtra)
+
+g <- ggplot(df, aes(x = wt, y = mpg, fill = cyl)) +
+  geom_point() +
+  geom_label(label = rownames(df),
+            nudge_x = 0.25,
+            nudge_y = 0.2) +
+  geom_smooth(method = lm , se= FALSE)
+
+ggMarginal(g, type = "boxplot")
+
+
+
+
+
+
+
+#58.Korelasyon(Heatmap)
+#Heatmapte kullanilacak tum degiskenler numerik olmali
+#surekli degiskenlerle kategorik degiskenler arasindaki iliskiyi ifade eder
+
+
+mtcars
+
+df <- as.matrix(mtcars)
+
+heatmap(df, scale = "column")
+
+#Dendogramlari kaldirip heatmapi daha iyi gormek icin
+heatmap(df,Colv = NA, Rowv = NA, scale = "column")
+
+
+
+#59.Korelasyon Matrisleri (Bu zamana kadar mesela scatterplot'da korelasyonlari iki degisken icin gorsellestirdik fakat bunu bircok degisken icin yapmak istedigimizde degiskenler arasi iliskiyi korelasyon matrisiyle gorsellestirebiliriz.)
+
+library(GGally)
+
+mtcars
+#mtcarsin icinden altkume olusturuyoruz, butun satirlari al ve 1. degisken ve 3'den 6'ya kadar olan degiskenleri al.
+df <- mtcars[, c(1 , 3:6)]
+cor(df)
+cor.test(df$mpg, df$drat) #iki degisken arasindaki iliskinin anlamli oldugunu gorebiliyoruz(p-value'ya bakarak)#
+cor(df)
+plot(df)
+
+ggcorr(df)
+ggpairs(df) #guzel bir fonksiyon ve istersek scatterplotlara dogru ekleyebiliriz.
+```
+
+
+```{r}
+#60.Time Series
+library(tidyverse)
+
+df <- economics
+
+ggplot(df, aes(date, pop)) +
+  geom_line(color = "orange", size = 1)
+
+
+#cizginin kalinligi arttikca unemploy/pop oraninin arttigi gozlemlenir.cunku size'a atadik.
+ggplot(df, aes(date, pop)) +
+  geom_line(aes(size = unemploy / pop))
+
+
+ggplot(df, aes(date, psavert)) +
+  geom_line() +
+  stat_smooth()
+
+
+#61. Gelismis Grafikler(rgraphgallery.com)
+
+#Dairesel Barplot(barplot kategorik degisken gorsellestirmede kullanilir.) 3 asamali bir sekilde olusturuluyor.
+
+#1.step
+
+veri <- data.frame(
+  id = seq(1,60),
+  ogrenciler = paste("Ogrenci", seq(1,60), sep ="_"),
+  notlar = sample(seq(10,100), 60, replace = T)
+)
+
+veri
+
+ggplot(veri, aes(x = factor(id), y = notlar)) +
+  geom_bar(stat = "identity") +
+  coord_polar(start = 0)
+
+
+
+p <- ggplot(veri, aes(x = as.factor(id), y = notlar))+
+  
+  geom_bar(stat = "identity") + 
+  ylim(-100,120) +  #y sutununun boyutunu belirler#
+  theme_minimal() + 
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-2,4) , "cm") #gereksiz bosluklari siler.#
+  ) +
+  coord_polar(start = 0)
+
+p
+
+#2.step(label ayarlamalari)
+
+label_data <- veri
+sutun_sayisi <- nrow(label_data)
+aci <- 90 - 360 * (label_data$id-0.5) / sutun_sayisi #standartlastirma yani her bir sutuna aci veriyoruz#
+label_data$hjust <- ifelse(aci < -90, 1, 0) #acilari standart forma soktuktan sonra hizaliyoruz#
+label_data$aci <- ifelse (aci < -90, aci + 180 , aci)
+
+#3. step(iki yapiyi birlestirme islemi)
+
+p <- ggplot(veri, aes(x = as.factor(id), y = notlar))+
+  
+  geom_bar(stat = "identity", fill = alpha("skyblue", 0.7)) + 
+  ylim(-100,120) +  #y sutununun boyutunu belirler#
+  theme_minimal() + 
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4) , "cm") #gereksiz bosluklari siler.#
+  ) +
+  coord_polar(start = 0) +
+  geom_text(data = label_data, aes(x = id, y = notlar + 10,label = ogrenciler,hjust = hjust), color = "black", fontface= "bold", alpha = 0.6, size = 2.5, angle = label_data$aci, inherit.aes = FALSE)
+
+p
+
+
+
+
+#62.Treemap giris(Basic treemap)
+#Treemaps hiyerarsik yapidaki veri setlerini gorsellestirmek icin ic ice kare-dikdortgen yapilari kullanan bir veri gorsellestirme teknigidir.
+
+#Agacin her dalina veri icerisindeki bir kategori dikdortgen olarak atanir ve alt dallarina da o kategorinin alt kategorileri atanir. En altta yer alan yapraklarda ise bu kategorilere ait olan surekli degisken degerleri gosterilir, yani bir adet surekli degiskene de ihtiyacimiz vardir.
+
+
+library(treemap)
+
+df <- data.frame(
+  gruplar = c("grup_1", "grup_2", "grup_3"),
+  degerler = c(10,90,60)
+)
+
+df
+
+
+treemap(df, index = "gruplar", vSize = "degerler", type = "index" ) #vsize boyutlandirma icin#
+
+
+
+#63.Treemap Detay(Alt gruplar ile treemap olusturmak)
+library(treemap)
+df <- data.frame(
+  gruplar = c(rep("grup_1",4),
+               rep("grup_2",2),
+               rep("grup_3",3)),
+  
+  alt_gruplar = paste("alt_grup", c(1,2,3,4,1,2,1,2,3), sep = "_"),
+  degerler = c(13,5,22,12,11,4,2,5,6)
+)   
+
+df
+
+treemap(df, index = c("gruplar", "alt_gruplar"), vSize = "degerler", type = "index")
+
+
+
+treemap(df, index = c("gruplar", "alt_gruplar"),
+        vSize = "degerler",
+        type = "index",
+        fontsize.labels = c(20,13),
+        fontcolor.labels = c("white", "black"),
+        bg.labels = c("transparent"),
+        align.labels = list(
+          c("center", "center"),
+          c("right", "bottom")
+        ),
+        border.col = c("black", "white"),
+        border.lwds = c(5,2)
+        
+        )
+
+
+#gercek veri uzerinde calisalim
+
+df <- diamonds
+df <- select(diamonds, cut, color, price)
+
+treemap(df, index = c("cut", "color"),
+        vSize = "price",
+        type = "index",
+        fontsize.labels = c(20,13),
+        fontcolor.labels = c("white", "black"),
+        bg.labels = c("transparent"),
+        align.labels = list(
+          c("center", "center"),
+          c("right", "bottom")
+        ),
+        border.col = c("black", "white"),
+        border.lwds = c(5,2)
+        
+      )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+

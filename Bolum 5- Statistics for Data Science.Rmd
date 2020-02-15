@@ -1,0 +1,424 @@
+---
+title: "Bolum 5"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#67.Orneklem Shiny Simulation (shiny.stat.calpoly.edu.tr/Sampling_Distribution)
+#70.Guven Araliklari Shiny Simulation (rpsychologist.com)
+#74.Binom Dagilimi Shiny Simulation(gallery.shinyapps.io/dist_calc/)
+```
+
+
+```{r}
+#84.R uygulamasi(Varsayim Kontrolu)
+# H0 : M >= 170
+# H1: M < 170
+#Bizim inandigimiz ispatlamaya calistigimiz seyi H1 hipotezine yaziyoruz.
+
+olcumler <- c(17, 160, 234, 149,145, 107, 197, 75, 201, 225, 211, 119, 157, 145, 127, 244, 163, 114, 145, 65, 112, 185, 202, 146, 203, 224, 203, 114, 188, 156, 187, 154, 177, 95, 165, 50, 110, 216, 138, 151, 166, 135, 155, 84,251, 173, 131, 207, 121, 120)
+
+summary(olcumler)
+
+#Varsayim Kontrolu: Normalligi Nasil Olceriz?
+#1.Histogram(merkezdeki sisislikten dolayi normal dagildigini soyleyebiliriz.)
+
+hist(olcumler)
+
+#2. Q-Q plot (or quantile-quantile plot) (noktalar cizginin etrafina guzel dagilmis kumelenmis) #
+library(ggpubr)
+
+ggqqplot(olcumler)
+
+
+#3. Shapiro-Wilks(Daha net birseydir bir testtir.)(Diger usttekiler gibi normallik testidir grafiklere bakilarak yapilmaz)
+# p-value eger ki 0,05'ten buyukse bu testte ornegin normal dagildigini soyleyebiliyoruz.
+
+shapiro.test(olcumler)
+
+
+
+#85. R Uygulamasi- t Testi(mu argumani H0 hipotezi icin, alternative H1 hipotezi icin ve conf.level belirtmemiz gerekiyor.)
+#p- value 0,05'ten kucuksen H0 hipotezini reddettigimizi gosteriyor. kullanicilar gecirdigi sure yuzde 95 guvenilirlikle 170'den kucuktur yorumunu yapabiliriz.
+#dagilim parametrik olmasaydi one sample t-test yerine welch testi yazardi!!!
+
+t.test(olcumler, mu = 170, alternative = "less", conf.level = 0.95)
+
+#86.Alternatif Fonksiyon ( t testi bitti bu ihtiyaca binaen kullanilabilecek bir alternatif) cok daha ayrintili sonuclar gorebiliyoruz.!!!!
+#ilk arguman data frameimiz , ikinci arguman incelenen degisken diger arguman H0 hipotezimiz ve type = all
+
+install.packages("inferr")
+library(inferr)
+
+df <- data.frame(olcumler)
+
+
+infer_os_t_test(df , olcumler, mu = 170, type = all)
+
+```
+
+
+```{r}
+#87.Nonparametrik tek orneklem testi (n'in daha kucuk bir sayida olmasi durumunda t testi benzeri parametrik olmayan testlere gerek duyulacak)
+
+#Burada dagilim parametrik olmayip normal dagilma varsayimi saglanmadigindan dolayi test medyan uzerine kurulur.
+
+install.packages("DescTools")
+
+library(DescTools)
+
+SignTest(df$olcumler, mu = 170) #burada signtesti parametrik oldugunu bildigimiz bir set icin yaptik ama bu testin asil amaci nonparametrik setler icin bu testi yapmaktir.
+
+SignTest(df$olcumler[1:10], mu = 170) #ilk 10 gozlem icin#
+
+#bu testi dagilimi shapiro.test'de normal olmayan verilere yapmak daha iyi olacaktir asagida gorelim.
+
+shapiro.test(c(1,1,1,1,1,1,1,1,1,1,1,1,10))
+
+SignTest(c(1,1,1,1,1,1,1,1,1,1,1,1,10), mu = 4 )
+
+
+#90. Tek Orneklem Oran Testi R Uygulamasi
+
+#500 kisi dis mecrada reklamlara tiklamis ve 40 tanesi alisveris yapmis olsun donusum orani: 40/500 = 0,08 olacaktir. 
+
+#Varsayim : arkada kullanilacak test z testi oldugundan n'in 30'dan buyuk oldugu varsayimini kullaniriz.
+
+prop.test(x = 40, n = 500, p = 0.05 , alternative = "two.sided")
+#testin sonucunda bu oranin 0.05 olmadigi goruluyor 
+
+prop.test(x = 40, n = 500, p = 0.05 , alternative = "less")
+#p-value 0.05'ten buyuk oldugundan H0' i reddedemedik. yani oran 0.05'ten kucuktur diyemiyoruz.
+
+prop.test(x = 40, n = 500, p = 0.05 , alternative = "greater")
+#p-value 0.05'ten kucuk oldugundan H0'i reddettik alternatif hipotezi kabul ettik. yani oran 0,05'ten buyuktur sonucuna vardik.
+```
+
+
+```{r}
+#95.R Uygulamasi Problem & Veri Seti(Bagimsiz Iki Orneklem t Testi yapilacak)
+#Sektorde AB Testi olarak bilinir.
+
+# H0 : M1 = M2
+# H1 : M1 != M2
+
+iki_ornek_veri <- data.frame(
+  
+  A = c(30,27,21,27,29,30,20,20,27,32,35,22,24,23,25,27,23,27,23,25,21,18,24,26,33,26,27,28,19,25),
+  
+  B = c(37,39,31,31,34,38,30,36,29,28,38,28,37,37,30,32,31,31,27,32,33,33,33,31,32,33,26,32,33,29)
+  )
+
+install.packages("funModeling")
+library(funModeling)
+
+profiling_num(iki_ornek_veri)
+
+library(tidyverse)
+
+ggplot(iki_ornek_veri, aes(A,B)) + 
+  geom_boxplot()
+#burada bir problem var o da su ki ayni df'deki iki ayri degiskeni bolup gorsellestiremiyor. ayni zamanda testlerde de sik sik karsilasilan bir problem
+
+A <- data.frame(degerler = iki_ornek_veri$A , sinif = "A" )
+B <- data.frame(degerler = iki_ornek_veri$B , sinif = "B" )
+
+AB <- rbind(A, B)
+
+ggplot(AB, aes(sinif, degerler, fill = sinif)) + 
+  geom_boxplot()
+#gorsellestirme problemini cozmus olduk.
+
+
+
+#96. R Uygulamasi & Varsayim Kontrolu (1- Normalligin Incelenmesi, 2- Varyans Homojenliginin Incelenmesi)
+
+#1- Normalligin Incelenmesi
+
+ggplot(AB, aes(degerler , fill = sinif)) +
+  geom_histogram(color = "black" , binwidth = 5 , alpha = 0.5) +
+  facet_grid(sinif ~ .)
+
+
+ggplot(AB, aes(degerler , fill = sinif)) +
+  geom_histogram(aes(y = ..density..), color = "black" , binwidth = 5, alpha = 0.5) +
+  geom_density(alpha = 0.3) +
+  facet_grid(sinif ~ .)
+
+#yukaridan grafiklere baktigimizda kabaca verimizin normal dagildigini soyleyebiliriz fakat asagida biz yine de numerik test uygulayacagiz.
+
+#numerik test
+
+apply(iki_ornek_veri, 2, shapiro.test) #iki grup icin de normallik testi yaptik. ve bu shapiro testinde iki grup icin de p-value degeri 0.05'ten buyuk oldugundan iki grubun da dagilimi normaldir.
+
+AB[AB$sinif == "A",]$degerler
+AB[AB$sinif == "B",]$degerler
+
+shapiro.test(AB[AB$sinif == "A",]$degerler)
+shapiro.test(AB[AB$sinif == "B",]$degerler)
+
+#yukarida tek sekilde yaptigimiz shapiro testini df'nin icindeki gruplarin degerlerine eriserek ayri ayri gruplara yaptigimizda da ayni sonuclari elde ettigimizi gorebiliriz.
+
+# 2- Varyans Homojenliginin Incelenmesi
+
+library(car)
+
+leveneTest(AB$degerler ~ AB$sinif, center = mean) 
+#p-value sonucu 0.05'ten buyuk oldugundan H0 reddedilemez sonucuna varilir.dolayisiyla 2.varsayimin saglandigini soyleyebiliriz.
+#eger ki bu varsayimlar saglanmaz ise nonparametrik hipotez testlerini kullanacagiz. yani t testi otomatik olarak welch testi olacak.
+
+#Hipotez Testi
+
+t.test(AB$degerler ~ AB$sinif, var.equal = TRUE)
+#bu testin sonucunda yuzde 95 guvenilirlikle bu iki grup ortalamasinda anlamli bir farklilik oldugunu soyleyebiliriz.
+```
+
+
+```{r}
+#99. Alternatif Fonksiyon R Uygulamasi
+library(inferr)
+
+infer_ts_ind_ttest(data = AB, x = sinif, y = degerler)
+#gruplar arasinda farklilik yoktur hipotezi reddedilmis cunku p-value'lar cok dusuk.
+#varyans homojenligi de test ediliyor ve varyanslar arasinda fark yoktur hipotezi reddedilememis yani H0 reddedilememis cunku p-value 0.05'ten daha buyuk.
+
+#100. Nonparametrik bagimsiz iki orneklem testi
+#Burada varsayimlar(normallik varsayimi ve varyans homojenligi) saglanmiyor ve gercek hayatta da genelde saglanmiyor ve biz burada parametrik olmayan testler yapacagiz.
+#Mann - Whitney U testi yapacagiz.
+
+wilcox.test(iki_ornek_veri$A, iki_ornek_veri$B)
+#Bu test sonucu olarak ortalamalar arasinda fark yoktur seklinde kurulan H0 hipotezi siddetli bir sekilde reddediliyor(p-value 0.05'ten cok kucuktur.)
+#bu testte mean degilde true location kullaniliyor.
+
+
+
+#102. Bagimli Iki Orneklem t testi 
+
+#H0 : M0 = MS
+#H1 : M0 != MS
+
+
+oncesi <- c(123,119,119,116,123,123,121,120,117,118,121,121,123,119,121,118,124,121,125,115,115,119,118,121,117,117,120,120,121,117,118,117,123,118,124,121,115,118,125,115)
+
+sonrasi <- c(118,127,122,132,129,123,129,132,128,130,128,138,140,130,134,134,124,140,134,129,129,138,134,124,122,126,133,127,130,130,130,132,117,130,125,129,133,120,127,123)
+
+A <- data.frame(ort_sat = oncesi, ONCE_SONRA = "ONCE")
+B <- data.frame(ort_sat = sonrasi, ONCE_SONRA = "SONRA")
+
+once_sonra <- rbind(A,B) #test yapmadan once bu duzenlemeleri yapmamiz gerekiyor.
+
+once_sonra
+
+library(funModeling)
+library(tidyverse)
+
+profiling_num(once_sonra)
+
+once_sonra %>%
+  group_by(ONCE_SONRA) %>%
+  summarise(mean(ort_sat), sd(ort_sat) , var(ort_sat))
+
+ggplot(once_sonra, aes(ONCE_SONRA, ort_sat)) +
+  geom_boxplot()
+#gorsele bakarak once sonra arasinda fark oldugundan bu egitimler ise yaramis gozukuyor.
+
+#normallik varsayimini uygulayacagiz.
+
+apply(data.frame(oncesi, sonrasi), 2, shapiro.test)
+#p-valuelar shapiroda 0.05'ten buyuk oldugundan normallik varsayimi saglaniyor
+
+#simdi ise 104.videodaki t testini yapacagiz.
+
+t.test(once_sonra$ort_sat ~ once_sonra$ONCE_SONRA, paired = TRUE)
+#HO hipotezi reddediliyor yani onceki verilerle sonraki veriler arasinda yuzde 95 guvenilirlikle fark vardir. p-value 0.05'ten kucuk oldugu icin de bu yorumu yapabiliriz.
+
+#alternatif fonksiyon
+
+df <- data.frame(oncesi,sonrasi)
+infer_ts_paired_ttest(df, x = oncesi , y = sonrasi)
+#test sonucunda aralarinda istatiksel olarak anlamli bir fark oldugu gozlemlenmekte.
+```
+
+
+```{r}
+#106.Nonparametrik bagimli iki orneklem testi
+
+wilcox.test(df$oncesi, df$sonrasi, paired = TRUE)
+#normallik varsayimi saglanmadiginda nonparametrik yontemlere ilerliyor olacagiz.
+
+
+
+#109.Iki Orneklem Oran Testi(Donusun Orani AB Testi)(iki oran arasindaki farkin anlamliliginin testi icin kullanilir.)
+
+#Hangi renkte buton koyalim yesil mi kirmizi mi butonun renginin bi onemi var mi?
+
+#Yesil Buton : 300 tiklanma, 1000 goruntulenme
+#Kirmizi Buton : 250 tiklanma, 1100 goruntulenme
+
+prop.test(x = c(300, 250), n = c(1000, 1100))
+#p-value 0.05'ten kucuk oldugundan dolayi iki oran arasindaki fark anlamlidir(aralarinda gercekten bir fark vardir) ve H0 hipotezi reddeliyor.
+
+
+#111.Varyans Analizi(Anova)(iki yada daha fazla grup ortalamasi arasinda istatistiksel olarak anlamli farklilik olup olmadiginin ogrenilmek istenildigi durumlarda kullanilir.)(iki grup oldugunda veriye uygunluguna gore kullanidigimiz bircok t testi vardi fakat burada ikiden fazla grup oldugunda bu test devreye giriyor.)
+
+#HO: M1=M2=M3 (grup ortalamalari arasinda ist.anl.farklilik yoktur.)
+#H1: Fark vardir.
+
+
+#Veri seti
+
+A <- c(28,33,30,29,28,29,27,31,30,32,28,33,25,29,27,31,31,30,31,34,30,32,31,34,28,32,31,28,33,29)
+
+B <- c(31,32,30,30,33,32,34,27,36,30,31,30,38,29,30,34,34,31,35,35,33,30,28,29,26,37,31,28,34,33)
+
+C <- c(40,33,38,41,42,43,38,35,39,39,36,34,35,40,38,36,39,36,33,35,38,35,40,40,39,38,38,43,40,42)
+
+#ANOVA'da da gruplarin uc farkli sutun seklinde verilmesi sikinti olusturabiliyor.bazen de ic ice verildiginde ayirmak gerekebilir.
+
+A <- data.frame(SURE = A , GRUP = "A")
+B <- data.frame(SURE = B , GRUP = "B")
+C <- data.frame(SURE = C , GRUP = "C")
+
+veri <- rbind(A,B)
+veri <- rbind(veri,C)
+
+veri %>% group_by(GRUP) %>%
+  summarise(mean(SURE), median(SURE), sd(SURE))
+
+ggplot(veri, aes(GRUP, SURE, fill = GRUP)) +
+  geom_boxplot()
+
+#varsayim
+#1.varsayim(normal dagilim)
+
+shapiro.test(veri[veri$GRUP == "A",]$SURE)
+
+shapiro.test(veri[veri$GRUP == "B",]$SURE)
+
+shapiro.test(veri[veri$GRUP == "C",]$SURE)
+
+#shapiro testinde p-valuelar 0.05'ten buyuk oldugu icin H0'i reddedemiyoruz. yani bu normal dagiliyor yorumunu yaptiriyor bize.
+
+#2.varsayim(varyans homojenligi testi)
+
+#normal dagilim varsayimi saglandiginda bartlett testi yapabiliriz.
+
+bartlett.test(SURE ~ GRUP, data = veri)
+#p-value 0.05'ten buyuktur ve bunu reddedemiyoruz ve bu sekilde anakitlelerin varyanslarinin da esit oldugu durumunu gozlemlemis oluyoruz. Yani bu varsayim da saglanmis oluyor.
+
+
+#eger ki normal dagilimdan bir suphe varsa veya normal dagilim varsayimina uyulmuyorsa  test kullanilir bartlett kullanilamaz.
+
+library(car)
+leveneTest(SURE ~ GRUP, data = veri)
+#bu testte center=median oldugunu unutma!!
+#p-value 0.05'ten buyuk oldugundan varyanslar arasinda fark olmadigi yani varyans homojenligi varsayiminin tipki bartlett'de oldugu gibi bu testte de saglandigi gorulur.
+
+#simdi hipotez testi yapacagiz.
+
+aov(SURE ~ GRUP, data = veri)
+#bizim amacimiz grup farkiligi olup olmadigini anlayabilmek ve bunu summary fonksiyonuyla saglayabiliyoruz.
+
+summary(aov(SURE ~ GRUP, data = veri))
+#p-value degeri 0.05'ten kucuk oldugundan H0 reddedilir yani gruplar arasinda istatistiksel olarak anlamli bir farklilik vardir yorumunu yapabiliriz.yani sitede iceriklerin tipi degistirildiginde gecirilen sureler arasinda anlamli bir farklilik oldugu gozlemlenmistir.peki bu farklilik hangi gruptan kaynaklaniyor???
+
+#coklu karsilastirma testi
+
+TukeyHSD(aov(SURE ~ GRUP, data = veri))
+#bu test sonucunda butun gruplarin arasinda farklilik oldugu soylenebilir.bunu kullanmamiz su acidan iyi oldu: ggplot da A ve B gruplari arasinda pek bir fark yok gibi gozukuyordu fakat bu testle istatistiki olarak aralarinda anlamli bir farklilik oldugunu ortaya koymus olduk.
+
+#117.Alternatif Fonksiyon(Anova bolumu icin)
+
+library(inferr)
+infer_oneway_anova(veri, SURE, GRUP)
+
+
+#118.Nonparametrik Varyans Analizi(nonparametrik demek varsayimlarin saglanmadigi durumlarda gidilecek testlerdir.)
+
+kruskal.test(SURE ~ GRUP, veri) #tilda isareti bagimliligi ifade eder.#
+#aslinda bizim veri setimiz parametrikti yani bu teste uygun degil fakat biz burada ihtiyacimiz oldugunda nasil kullanilacagini goruyoruz.
+#bu test sonucunda gruplar arasinda istatistiki olarak anlamli bir farklilik oldugu da gorulur.
+```
+
+
+```{r}
+#122.Korelasyon R Uygulamasi
+
+df <- mtcars
+head(df)
+
+cor(df)
+
+library(ggpubr)
+ggscatter(df, x = "mpg" , y = "wt",
+          add = "reg.line",
+          conf.int = TRUE,
+          cor.coef = TRUE,
+          cor.method = "pearson")#x bagimsiz, y bagimli degisken
+#iki degisken arasindaki korelasyonu incelemek isteyip ve bunun uzerinde korelasyon katsayisini ve p-value'da gormek istersek bu fonksiyonu kullanmak cok elverisli
+#aralarindaki iliskinin p-value 0.05'ten kucuk oldugu icin anlamli oldugu gozlenmekte ayrica korelasyonlari da negatif ve gucludur.
+#mpg degiskeni arttiginda wt degiskeni azaliyor.
+
+#123.Varsayim kontrolu
+
+shapiro.test(df$mpg)
+shapiro.test(df$wt)
+#ikisi icin de p-value 0.05'ten buyuk oldugundan normallik varsayimi saglaniyor.
+
+#124.Korelasyon testi(hipotez testi ve test istatistigi)
+
+cor.test(df$wt, df$mpg, method = "pearson")
+#p-value 0.05'ten kucuk oldugundan degiskenler arasindaki iliski anlamlidir.H0 reddedildi yani degiskenler arasinda korelasyon yoktur hipotezi reddedildi.
+#ciktinin sonunda da korelasyonun kac oldugunu gorebiliriz, aralarindaki iliskinin anlamli oldugunu yorumunu yaptiktan sonra!!!
+
+#125.Nonparametrik Korelasyon Testi(Yukaridaki normallik varsayimi saglanmadiginda bu testi kullanacagiz.)
+
+cor.test(df$mpg, df$wt, method = "spearman" )
+
+cor.test(df$mpg, df$wt, method = "kendall" )
+
+#126.Korelasyon Matrisi
+
+cor(df) 
+#bu bize hizli sonuc verir ama bazi eksileri vardir, mesela p-value degerlerini gormuyoruz ve eksik degerler ne oldu belli degil bu goz onunde bulundurulmamis oluyor
+
+#2.problemin cozumu icin(sadece varolan gozlemler arasindan bir korelasyon hesaplanmasini istedigimizde kullaniyoruz)
+cor(df, use = "complete.obs")
+
+#1.problemin cozumu(bu korelasyonlarin yaninda p-value degerlerini de gormek istersek,korelasyonlari ciktinin ustundeki matristen ve anlamli olup olmadiklarini kontrol etmek icin de p-valuelari alttaki matristen elde edebiliriz.
+library(Hmisc)
+
+rcorr(as.matrix(df))
+
+#127.Gelismis Korelasyon Matrisi
+
+install.packages("PerformanceAnalytics")
+library(PerformanceAnalytics)
+
+#mtcars icerisinden sadece surekli degiskenleri alacagiz kategorikleri istemiyoruz.
+df <- mtcars[, c(1,3,4,5,6,7)]
+
+chart.Correlation(df, histogram = TRUE , pch = 19)
+#dagilimlari, yogunluklari, degiskenleri, birbirleri ile aralarindaki korelasyonlari, scatter plot cizilmis aralarindaki iliskinin yonunu gorebiliyoruz.(degisken sayisi cok cok fazla degilse bunu kullanmak faydali olur.)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+

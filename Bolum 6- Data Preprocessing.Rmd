@@ -1,0 +1,9 @@
+---
+title: "Bolum 6"
+output: html_document
+---
+
+```{r}
+
+```
+
